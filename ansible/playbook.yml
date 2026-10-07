@@ -1,0 +1,25 @@
+---
+- name: Configuration et personnalisation du serveur Web Nginx
+  hosts: webserver
+  gather_facts: true
+
+  tasks:
+    - name: Vérifier que le conteneur Nginx est bien en cours d'exécution
+      community.docker.docker_container_info:
+        name: site-web-projet-d-automatisation
+      register: result_container
+
+    - name: Afficher le statut du conteneur Nginx
+      ansible.builtin.debug:
+        msg: "Le conteneur {{ result_container.container.Name }} est dans l'état : {{ result_container.container.State.Status }}"
+
+    - name: Déployer la page d'accueil dynamique via template Jinja2
+      community.docker.docker_container_exec:
+        container: site-web-projet-d-automatisation
+        argv:
+          - sh
+          - -c
+          - |
+            cat << 'EOF' > /usr/share/nginx/html/index.html
+            {{ lookup('template', 'templates/index.html.j2') }}
+            EOF
